@@ -6,6 +6,7 @@ FT::FT()
 
 void FT::DiscreteFourierTransform(int** InputImage, int** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
+	
 	int M = h;
 	int N = w;
 
@@ -159,10 +160,93 @@ void FT::InverseDFT(double ** InverseReal, double ** InverseImag, double ** pFre
 
 void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
+	
+	int M = h, N = w;
+	double ** pFreq = new double *[M];
+	for (int index = 0; index < M; index++)
+		pFreq[index] = new double[N];
+	for (int indexa = 0; indexa < M; indexa++)
+		for (int indexb = 0; indexb < N; indexb++)
+			pFreq[indexa][indexb] = 0.0;
+	//==========================================
+	for (int indexa = 0; indexa < M; indexa++)
+		for (int indexb = 0; indexb < N; indexb++)
+			FFT(FreqReal, FreqImag, InputImage, M,N, indexb, indexa);
+	for (int indexa = 0; indexa < M; indexa++)
+	{
+		for (int indexb = 0; indexb < N; indexb++) {
+			pFreq[indexa][indexb] = sqrt(pow(FreqReal[indexa][indexb], (double)2.0)+pow(FreqImag[indexa][indexb],(double)2.0));
+			OutputImage[indexa][indexb] = pFreq[indexa][indexb];
+		}
+	}
+	for (int delcnt = 0; delcnt < M; delcnt++)
+	{
+		delete[] pFreq[delcnt];
+	}
+	delete[] pFreq;
 }
 
 void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage, int h, int w, int u, int v)
 {
+	int M = h;
+	int N = w;
+	double* xreal;
+	double* ximg;
+	xreal = new double[M*M];
+	ximg = new double[M*M];
+	for (int indexa = 0; indexa < M; indexa++) {
+		for (int indexb = 0; indexb < M; indexb++) {
+			xreal[M*indexa + indexb] = InputImage[indexa][indexb];
+			ximg[M*indexa + indexb] = InputImage[indexa][indexb];
+		}
+	}
+	
+	int SIZE = M*M;
+
+	for (int indexa = 1, indexb = 0; indexa < SIZE; indexa++) {
+		for (int k = SIZE >> 1; !((indexb ^= k)&k); k >>= 1) {
+			if (indexa > indexb) {
+				double tempr = xreal[indexa], tempi = ximg[indexa];
+				xreal[indexa] = xreal[indexb]; ximg[indexa] = ximg[indexb];
+				xreal[indexb] = tempr; ximg[indexb] = tempi;
+			}
+		}
+	}
+
+
+
+	for (int k = 2; k <= SIZE; k *= 2) {
+
+		double w = -2 * 3.14159 / k;
+		double dsitar = cos(w), dsitai = sin(w);
+
+		for (int t = 0; t < SIZE; t += k) {
+
+			double sitar = 1, sitai = 0;
+
+			for (int tt = t; tt < t + k / 2; tt++) {
+				double ar = xreal[tt];
+				double ai = ximg[tt];
+				double br = xreal[tt + k / 2] * sitar - ximg[tt + k / 2] * sitai;
+				double bi = xreal[tt + k / 2] * sitai - ximg[tt + k / 2] * sitar;
+				xreal[tt] = ar + br;
+				ximg[tt] = ai + bi;
+				xreal[tt + k / 2] = ar - br;
+				ximg[tt + k / 2] = ai - bi;
+				double tempr = sitar, tempi = sitai;
+				sitar = tempr*dsitar - tempi*dsitai;
+				sitai = tempr*dsitai + tempi*dsitar;
+			}
+		}
+	}
+	for (int indexa = 0; indexa < M; indexa++) {
+		for (int indexb = 0; indexb < M; indexb++) {
+			pFreqReal[indexa][indexb] = xreal[indexa*M + indexb];
+			pFreqImag[indexa][indexb] = ximg[indexa*M + indexb];
+		}
+	}
+	delete[] xreal;
+	delete[] ximg;
 }
 
 void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
