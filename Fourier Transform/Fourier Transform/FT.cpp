@@ -204,13 +204,14 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage, int h,
 	int SIZE = M*M;
 
 	for (int indexa = 1, indexb = 0; indexa < SIZE; indexa++) {
-		for (int k = SIZE >> 1; !((indexb ^= k)&k); k >>= 1) {
+		for (int k = SIZE >> 1; !((indexb ^= k)&k); k >>= 1);
+		
 			if (indexa > indexb) {
 				double tempr = xreal[indexa], tempi = ximg[indexa];
 				xreal[indexa] = xreal[indexb]; ximg[indexa] = ximg[indexb];
 				xreal[indexb] = tempr; ximg[indexb] = tempi;
 			}
-		}
+		
 	}
 
 
@@ -239,6 +240,12 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage, int h,
 			}
 		}
 	}
+
+	for (int indexa = 0; indexa < SIZE; indexa++) {
+		xreal[indexa] /= M;
+		ximg[indexa] /= M;
+	}
+
 	for (int indexa = 0; indexa < M; indexa++) {
 		for (int indexb = 0; indexb < M; indexb++) {
 			pFreqReal[indexa][indexb] = xreal[indexa*M + indexb];
