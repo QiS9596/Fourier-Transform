@@ -15,7 +15,6 @@ public:
 
 	void FastFourierTransform(int** InputImage, int** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w);
 	void FFT(double** pFreqReal, double** pFreqImag, int** InputImage,double * xreal,double * ximg, int h, int w, int u, int v);
-	void _1dFFT(double * xreal, double * ximg, int SIZE);
 
 	void InverseFastFourierTransform(int** InputImage, int** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w);
 	void InverseFFT(double ** InverseReal, double ** InverseImag, double ** pFreqReal, double ** pFreqImag, int h, int w, int x, int y);

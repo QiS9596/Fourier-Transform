@@ -276,6 +276,28 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage,double 
 
 void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
+	int SIZE = h;
+	double ** resultReal;
+	double ** resultImag;
+	resultReal = new double*[SIZE];
+	resultImag = new double*[SIZE];
+	for (int index = 0; index < SIZE; index++) {
+		resultReal[index] = new double[SIZE];
+		resultImag[index] = new double[SIZE];
+	}
+	double * xreal = new double[SIZE];
+	double * ximag = new double[SIZE];
+
+	//TO-DO
+
+	for (int index = 0; index < SIZE; index++) {
+		delete[] resultReal[index];
+		delete[] resultImag[index];
+	}
+	delete[] resultReal;
+	delete[] resultImag;
+	delete[] xreal;
+	delete[] ximag;
 }
 
 void FT::InverseFFT(double ** InverseReal, double ** InverseImag, double ** pFreqReal, double ** pFreqImag, int h, int w, int x, int y)
