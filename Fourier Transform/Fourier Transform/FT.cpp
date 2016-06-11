@@ -162,14 +162,9 @@ void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** F
 {
 	
 	int M = h, N = w;
-	double ** pFreq = new double *[M];
-	for (int index = 0; index < M; index++)
-		pFreq[index] = new double[N];
-	for (int indexa = 0; indexa < M; indexa++)
-		for (int indexb = 0; indexb < N; indexb++)
-			pFreq[indexa][indexb] = 0.0;
 
-	double * xreal, *ximg;
+	std::complex<double>* x;
+	double * xreal;double *ximg;
 	double ** resultReal;
 	double ** resultImg;
 	xreal = new double[M];
@@ -183,6 +178,7 @@ void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** F
 	//==========================================
 	//TODO
 	for (int indexa = 0; indexa < M; indexa++) {
+
 		for (int indexb = 0; indexb < M; indexb++)
 		{
 			resultReal[indexa][indexb] = InputImage[indexb][indexa];
@@ -191,44 +187,61 @@ void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** F
 	}
 
 	for (int indexa = 0; indexa < M; indexa++) {
+		x = new std::complex<double>[M];
 		for (int indexb = 0; indexb < M; indexb++) {
 			xreal[indexb] = resultReal[indexb][indexa];
 			ximg[indexb] = resultImg[indexb][indexa];
 		}
+		/*
+		for (int index = 0; index < M; index++)
+			x[index] = std::complex<double>(xreal[index], ximg[index]);
+		FFT(FreqReal[0], FreqImag[0], x, M, M, 1);
+		for (int index = 0; index < M; index++) {
+			xreal[index] = x[index].real();
+			ximg[index] = x[index].imag();
+		}*/
 		FFT(FreqReal,FreqImag,InputImage,xreal,ximg,M,N,indexa,indexa);
 		for (int indexb = 0; indexb < M; indexb++) {
 			resultReal[indexb][indexa] = xreal[indexb];
 			resultImg[indexb][indexa] = ximg[indexb];
 		}
+		free(x);
 	}
 
 	for (int indexa = 0; indexa < M; indexa++) {
+		x = new std::complex<double>[M];
 		for (int indexb = 0; indexb < M; indexb++) {
 			xreal[indexb] = resultReal[indexa][indexb];
 			ximg[indexb] = resultImg[indexa][indexb];
 		}
+
+		/*
+		for (int index = 0; index < M; index++)
+			x[index] = std::complex<double>(xreal[index], ximg[index]);
+		FFT(FreqReal[0], FreqImag[0], x, M, M, 1);
+		for (int index = 0; index < M; index++) {
+			xreal[index] = x[index].real();
+			ximg[index] = x[index].imag();
+		}*/
+
 		FFT(FreqReal, FreqImag, InputImage, xreal, ximg, M, N, indexa, indexa);
 		for (int indexb = 0; indexb < M; indexb++) {
 			resultReal[indexa][indexb] = xreal[indexb];
 			resultImg[indexa][indexb] = ximg[indexb];
 		}
+		free(x);
 	}
 
-	double flag = -100;
+//	double flag = -100;
 	for (int indexa = 0; indexa < M; indexa++) {
 		for (int indexb = 0; indexb < M; indexb++) {
 			FreqImag[indexa][indexb] = resultImg[indexa][indexb];
-			FreqReal[indexa][indexb] = resultImg[indexa][indexb];
+			FreqReal[indexa][indexb] = resultReal[indexa][indexb];
 			OutputImage[indexa][indexb] = sqrt(resultReal[indexa][indexb] * resultReal[indexa][indexb] + resultImg[indexa][indexb] * resultImg[indexa][indexb]) * 255;
 		}
 	}
 	//...
 
-	for (int delcnt = 0; delcnt < M; delcnt++)
-	{
-		delete[] pFreq[delcnt];
-	}
-	delete[] pFreq;
 
 	for (int index = 0; index < M; index++) {
 		delete[] resultReal[index];
@@ -259,7 +272,7 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage,double 
 
 	}
 
-	for (int k = 2; k <= SIZE; k *= 2) {
+	for (int k = 2; k <= SIZE; k <<= 1) {
 
 		double w = -2 * 3.14159 / (1.0*k);
 		double dsitar = cos(w), dsitai = sin(w);
@@ -272,7 +285,7 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage,double 
 				double ar = xreal[tt];
 				double ai = ximg[tt];
 				double br = xreal[tt + k / 2] * sitar - ximg[tt + k / 2] * sitai;
-				double bi = xreal[tt + k / 2] * sitai - ximg[tt + k / 2] * sitar;
+				double bi = xreal[tt + k / 2] * sitai + ximg[tt + k / 2] * sitar;
 				xreal[tt] = ar + br;
 				ximg[tt] = ai + bi;
 				xreal[tt + k / 2] = ar - br;
@@ -329,6 +342,60 @@ void FT::_1dFFT(double * xreal, double * ximg, int SIZE) {
 	for (int indexa = 0; indexa < SIZE; indexa++) {
 		xreal[indexa] /= SIZE;
 		ximg[indexa] /= SIZE;
+	}
+}
+
+//team 11's 1dfft
+
+void swap(std::complex<double> *a, std::complex<double> *b)
+{
+	std::complex<double> temp = *a;
+	*a = *b;
+	*b = temp;
+}
+
+void FT::FFT(double * pFreqReal, double * pFreqImag, std::complex<double> * x, long int row, long int n, long int start)
+{
+	const double PI = 3.1415926;
+	int N = row;
+	for (int i = 1, j = 0; i < N; ++i)
+	{
+		for (int k = N >> 1; !((j ^= k)&k); k >>= 1);
+		if (i > j) swap(&x[i], &x[j]);
+	}
+
+	/* dynamic programming */
+	for (int k = 2; k <= N; k <<= 1)
+	{
+		double omega = -2.0 * PI / (1.0*k);
+		//利用Eular's equation計算傅立葉之實虛數部分
+		//InverseReal[x][y] += (pFreqReal[v][u] * c - pFreqImag[v][u] * s);
+		//InverseImag[x][y] += (pFreqReal[v][u] * s + pFreqImag[v][u] * c);
+
+		std::complex<double> dtheta(cos(omega), sin(omega));
+		// 每k個做一次FFT
+		for (int j = 0; j < N; j += k)
+		{
+			// 前k/2個與後k/2的三角函數值恰好對稱，
+			// 因此兩兩對稱的一起做。
+			std::complex<double> theta(1, 0);
+			for (int i = j; i < j + k / 2; i++)
+			{
+				std::complex<double> a = x[i];
+				std::complex<double> b = x[i + k / 2] * theta;
+				x[i] = a + b;
+				x[i + k / 2] = a - b;
+				theta *= dtheta;
+			}
+		}
+	}
+	for (int i = 0; i < N; ++i)
+	{
+		//if (start == 1)
+		//{
+			//x[i] = std::conj(x[i]);
+			x[i] /= N;
+		//}
 	}
 }
 
