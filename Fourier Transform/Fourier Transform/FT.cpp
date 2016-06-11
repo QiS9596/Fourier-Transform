@@ -347,57 +347,7 @@ void FT::_1dFFT(double * xreal, double * ximg, int SIZE) {
 
 //team 11's 1dfft
 
-void swap(std::complex<double> *a, std::complex<double> *b)
-{
-	std::complex<double> temp = *a;
-	*a = *b;
-	*b = temp;
-}
 
-void FT::FFT(double * pFreqReal, double * pFreqImag, std::complex<double> * x, long int row, long int n, long int start)
-{
-	const double PI = 3.1415926;
-	int N = row;
-	for (int i = 1, j = 0; i < N; ++i)
-	{
-		for (int k = N >> 1; !((j ^= k)&k); k >>= 1);
-		if (i > j) swap(&x[i], &x[j]);
-	}
-
-	/* dynamic programming */
-	for (int k = 2; k <= N; k <<= 1)
-	{
-		double omega = -2.0 * PI / (1.0*k);
-		//利用Eular's equation計算傅立葉之實虛數部分
-		//InverseReal[x][y] += (pFreqReal[v][u] * c - pFreqImag[v][u] * s);
-		//InverseImag[x][y] += (pFreqReal[v][u] * s + pFreqImag[v][u] * c);
-
-		std::complex<double> dtheta(cos(omega), sin(omega));
-		// 每k個做一次FFT
-		for (int j = 0; j < N; j += k)
-		{
-			// 前k/2個與後k/2的三角函數值恰好對稱，
-			// 因此兩兩對稱的一起做。
-			std::complex<double> theta(1, 0);
-			for (int i = j; i < j + k / 2; i++)
-			{
-				std::complex<double> a = x[i];
-				std::complex<double> b = x[i + k / 2] * theta;
-				x[i] = a + b;
-				x[i + k / 2] = a - b;
-				theta *= dtheta;
-			}
-		}
-	}
-	for (int i = 0; i < N; ++i)
-	{
-		//if (start == 1)
-		//{
-			//x[i] = std::conj(x[i]);
-			x[i] /= N;
-		//}
-	}
-}
 
 void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
