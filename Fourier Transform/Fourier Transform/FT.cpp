@@ -161,9 +161,8 @@ void FT::InverseDFT(double ** InverseReal, double ** InverseImag, double ** pFre
 void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
 	
+	//initialization
 	int M = h, N = w;
-
-	std::complex<double>* x;
 	double * xreal;double *ximg;
 	double ** resultReal;
 	double ** resultImg;
@@ -175,73 +174,45 @@ void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** F
 		resultReal[index] = new double[N];
 		resultImg[index] = new double[N];
 	}
-	//==========================================
-	//TODO
 	for (int indexa = 0; indexa < M; indexa++) {
-
 		for (int indexb = 0; indexb < M; indexb++)
 		{
 			resultReal[indexa][indexb] = InputImage[indexb][indexa];
 			resultImg[indexa][indexb] = 0;
 		}
 	}
-
+	//do 1d fft to every column
 	for (int indexa = 0; indexa < M; indexa++) {
-		x = new std::complex<double>[M];
 		for (int indexb = 0; indexb < M; indexb++) {
 			xreal[indexb] = resultReal[indexb][indexa];
 			ximg[indexb] = resultImg[indexb][indexa];
 		}
-		/*
-		for (int index = 0; index < M; index++)
-			x[index] = std::complex<double>(xreal[index], ximg[index]);
-		FFT(FreqReal[0], FreqImag[0], x, M, M, 1);
-		for (int index = 0; index < M; index++) {
-			xreal[index] = x[index].real();
-			ximg[index] = x[index].imag();
-		}*/
 		FFT(FreqReal,FreqImag,InputImage,xreal,ximg,M,N,indexa,indexa);
 		for (int indexb = 0; indexb < M; indexb++) {
 			resultReal[indexb][indexa] = xreal[indexb];
 			resultImg[indexb][indexa] = ximg[indexb];
 		}
-		free(x);
 	}
-
+	//do 1d fft to every row
 	for (int indexa = 0; indexa < M; indexa++) {
-		x = new std::complex<double>[M];
 		for (int indexb = 0; indexb < M; indexb++) {
 			xreal[indexb] = resultReal[indexa][indexb];
 			ximg[indexb] = resultImg[indexa][indexb];
 		}
-
-		/*
-		for (int index = 0; index < M; index++)
-			x[index] = std::complex<double>(xreal[index], ximg[index]);
-		FFT(FreqReal[0], FreqImag[0], x, M, M, 1);
-		for (int index = 0; index < M; index++) {
-			xreal[index] = x[index].real();
-			ximg[index] = x[index].imag();
-		}*/
-
 		FFT(FreqReal, FreqImag, InputImage, xreal, ximg, M, N, indexa, indexa);
 		for (int indexb = 0; indexb < M; indexb++) {
 			resultReal[indexa][indexb] = xreal[indexb];
 			resultImg[indexa][indexb] = ximg[indexb];
 		}
-		free(x);
 	}
-
-//	double flag = -100;
+	//send transformed information to output
 	for (int indexa = 0; indexa < M; indexa++) {
 		for (int indexb = 0; indexb < M; indexb++) {
-			FreqImag[indexa][indexb] = resultImg[indexa][indexb];
-			FreqReal[indexa][indexb] = resultReal[indexa][indexb];
+			//FreqImag[indexa][indexb] = resultImg[indexa][indexb];
+			//FreqReal[indexa][indexb] = resultReal[indexa][indexb];
 			OutputImage[indexa][indexb] = sqrt(resultReal[indexa][indexb] * resultReal[indexa][indexb] + resultImg[indexa][indexb] * resultImg[indexa][indexb]) * 255;
 		}
 	}
-	//...
-
 
 	for (int index = 0; index < M; index++) {
 		delete[] resultReal[index];
@@ -302,52 +273,6 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage,double 
 	}
 
 }
-
-void FT::_1dFFT(double * xreal, double * ximg, int SIZE) {
-	for (int indexa = 1, indexb = 0; indexa < SIZE; indexa++) {
-		for (int k = SIZE >> 1; !((indexb ^= k)&k); k >>= 1);
-
-		if (indexa > indexb) {
-			double tempr = xreal[indexa], tempi = ximg[indexa];
-			xreal[indexa] = xreal[indexb]; ximg[indexa] = ximg[indexb];
-			xreal[indexb] = tempr; ximg[indexb] = tempi;
-		}
-
-	}
-
-	for (int k = 2; k <= SIZE; k *= 2) {
-
-		double w = -2 * 3.14159 / k;
-		double dsitar = cos(w), dsitai = sin(w);
-
-		for (int t = 0; t < SIZE; t += k) {
-
-			double sitar = 1, sitai = 0;
-
-			for (int tt = t; tt < t + k / 2; tt++) {
-				double ar = xreal[tt];
-				double ai = ximg[tt];
-				double br = xreal[tt + k / 2] * sitar - ximg[tt + k / 2] * sitai;
-				double bi = xreal[tt + k / 2] * sitai - ximg[tt + k / 2] * sitar;
-				xreal[tt] = ar + br;
-				ximg[tt] = ai + bi;
-				xreal[tt + k / 2] = ar - br;
-				ximg[tt + k / 2] = ai - bi;
-				double tempr = sitar, tempi = sitai;
-				sitar = tempr*dsitar - tempi*dsitai;
-				sitai = tempr*dsitai + tempi*dsitar;
-			}
-		}
-	}
-	for (int indexa = 0; indexa < SIZE; indexa++) {
-		xreal[indexa] /= SIZE;
-		ximg[indexa] /= SIZE;
-	}
-}
-
-//team 11's 1dfft
-
-
 
 void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
