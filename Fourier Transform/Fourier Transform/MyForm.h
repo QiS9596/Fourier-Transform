@@ -479,7 +479,7 @@ private: System::Void inverseFastFourierTransformToolStripMenuItem_Click(System:
 
 	//將算出頻率資訊傳入輸出影像
 	fourierTransformMethod->InverseFastFourierTransform(dataManager->GetInputImage(), dataManager->GetOutputImage(), dataManager->GetFreqReal(), dataManager->GetFreqImag(), h, w);
-	Bitmap^ FFTImage = gcnew Bitmap(w, h);
+	Bitmap^ DFTImage = gcnew Bitmap(w, h);
 	for (int i = 0; i <h; i++)
 	{
 		for (int j = 0; j <w; j++)
@@ -493,10 +493,10 @@ private: System::Void inverseFastFourierTransformToolStripMenuItem_Click(System:
 			{
 				valuePixeli = 0;
 			}
-			FFTImage->SetPixel(j, i, Color::FromArgb(valuePixeli, valuePixeli, valuePixeli));
+			DFTImage->SetPixel(j, i, Color::FromArgb(valuePixeli, valuePixeli, valuePixeli));
 		}
 	}
-	pictureBox_OutputImage->Image = FFTImage;
+	pictureBox_OutputImage->Image = DFTImage;
 
 }
 };

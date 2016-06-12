@@ -160,7 +160,6 @@ void FT::InverseDFT(double ** InverseReal, double ** InverseImag, double ** pFre
 
 void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
-	
 	//initialization
 	int M = h, N = w;
 	double * xreal;double *ximg;
@@ -208,8 +207,8 @@ void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** F
 	//send transformed information to output
 	for (int indexa = 0; indexa < M; indexa++) {
 		for (int indexb = 0; indexb < M; indexb++) {
-			//FreqImag[indexa][indexb] = resultImg[indexa][indexb];
-			//FreqReal[indexa][indexb] = resultReal[indexa][indexb];
+			FreqImag[indexa][indexb] = resultImg[indexa][indexb];
+			FreqReal[indexa][indexb] = resultReal[indexa][indexb];
 			OutputImage[indexa][indexb] = sqrt(resultReal[indexa][indexb] * resultReal[indexa][indexb] + resultImg[indexa][indexb] * resultImg[indexa][indexb]) * 255;
 		}
 	}
@@ -275,6 +274,7 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage,double 
 
 void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
+	std::cout << "hello,world" << std::endl;
 	std::complex<double>* x;
 	int SIZE = h;
 	double ** resultReal;
@@ -285,13 +285,14 @@ void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, doub
 		resultReal[index] = new double[SIZE];
 		resultImag[index] = new double[SIZE];
 	}
+
 	double * xreal = new double[SIZE];
 	double * ximag = new double[SIZE];
 
 	for (int indexa = 0; indexa < SIZE; indexa++) {
 		for (int indexb = 0; indexb < SIZE; indexb++) {
-			resultReal[indexa][indexb] = InputImage[indexb][indexa];
-			resultImag[indexa][indexb] = InputImage[indexb][indexa];
+			resultReal[indexa][indexb] = FreqReal[indexb][indexa];
+			resultImag[indexa][indexb] = FreqImag[indexb][indexa];
 		}
 	}
 
@@ -299,7 +300,7 @@ void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, doub
 		x = new std::complex<double>[SIZE];
 		for (int indexb = 0; indexb < SIZE; indexb++) {
 			xreal[indexb] = resultReal[indexa][indexb] * SIZE;
-			ximag[indexb] = resultReal[indexa][indexb] * SIZE;
+			ximag[indexb] = resultImag[indexa][indexb] * SIZE;
 		}
 		for (int index = 0; index < SIZE; index++) {
 			x[index] = std::complex<double>(xreal[index], ximag[index]);
@@ -339,14 +340,16 @@ void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, doub
 		free(x);
 	}
 
-	double flag = 0;
+	double flag = -100;
 	for (int indexa = 0; indexa < SIZE; indexa++) {
 		for (int indexb = 0; indexb < SIZE; indexb++) {
 			OutputImage[indexa][indexb] = sqrt(resultReal[indexa][indexb] * resultReal[indexa][indexb] + resultImag[indexa][indexb] * resultImag[indexa][indexb]);
 			if (flag < OutputImage[indexa][indexb])	flag = OutputImage[indexa][indexb];
+			else flag = 0;
 		}
 	}
-	flag = 1 / (flag / 255);
+	flag /= 255;
+	flag = 1 / flag;
 	for (int indexa = 0; indexa < SIZE; indexa++) {
 		for (int indexb = 0; indexb < SIZE; indexb++) {
 			OutputImage[indexa][indexb] *= flag;
@@ -421,12 +424,135 @@ void FT::InverseFFT(double ** InverseReal, double ** InverseImag, double ** pFre
 	}
 }
 
+
+//team 11's code
 void swap(std::complex<double> *a, std::complex<double> *b)
 {
 	std::complex<double> temp = *a;
 	*a = *b;
 	*b = temp;
 }
+
+
+void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w, int dir)
+{
+	int M = h;
+	int N = w;
+	printf("M = %d,N = %d\n", M, N);
+
+	std::complex<double>** out = new std::complex<double>*[M];
+	for (int newcnt = 0; newcnt<M; newcnt++)
+	{
+		out[newcnt] = new std::complex<double>[N]; // ³Å¥ß¸­ÀW²v°}¦C
+	}
+	for (int i = 0; i < M; i++)
+	{
+		for (int j = 0; j < N; j++)
+		{
+			double a = FreqReal[j][i], b = FreqImag[j][i];
+			if (dir == 1)
+			{
+				a = InputImage[j][i];
+				b = 0;
+			}
+			std::complex<double> temp(a, b);
+			out[i][j] = temp;
+
+		}
+	}
+	if (dir == 1)
+		for (int j = 0; j <N; ++j)
+		{
+			std::complex<double> *input = new std::complex<double>[M];
+			for (int i = 0; i < M; ++i)
+				input[i] = out[i][j];
+			FFT(FreqReal[0], FreqImag[0], input, M, M, dir);
+			for (int i = 0; i < M; ++i)
+				out[i][j] = input[i];
+			free(input);
+		}
+	for (int i = 0; i < M; ++i)
+	{
+		std::complex<double> *input = new std::complex<double>[N];
+		for (int j = 0; j < N; ++j)
+		{
+			if (dir == 1)
+				input[j] = out[i][j];
+			else
+			{
+				std::complex<double> temp(out[i][j].real()*N, out[i][j].imag()*N);
+				input[j] = temp;
+			}
+		}
+		FFT(FreqReal[0], FreqImag[0], input, N, N, dir);
+		for (int j = 0; j < N; ++j)
+			out[i][j] = input[j];
+		free(input);
+	}
+	if (dir == -1)
+		for (int j = 0; j <N; ++j)
+		{
+			std::complex<double> *input = new std::complex<double>[M];
+			for (int i = 0; i < M; ++i)
+			{
+				std::complex<double> temp(out[i][j].real()*N, out[i][j].imag()*N);
+				input[i] = temp;
+			}
+			FFT(FreqReal[0], FreqImag[0], input, M, M, dir);
+			for (int i = 0; i < M; ++i)
+				out[i][j] = input[i];
+			free(input);
+		}
+	double max_s = -100;
+	for (int i = 0; i < M; i++)
+		for (int j = 0; j < N; j++)
+		{
+			FreqImag[i][j] = out[i][j].imag();
+			FreqReal[i][j] = out[i][j].real();
+			if (dir == 1)
+				OutputImage[i][j] = sqrt(pow(out[i][j].real(), 2.0) + pow(out[i][j].imag(), 2.0)) * 255;
+			else
+			{
+				OutputImage[i][j] = sqrt(pow(out[i][j].real(), 2.0) + pow(out[i][j].imag(), 2.0));
+			}
+			max_s < OutputImage[i][j] ? max_s = OutputImage[i][j] : 0;
+		}
+
+	dir == -1 ? max_s /= 255 : max_s = 1.0f;
+	max_s = 1.0f / max_s;
+	for (int i = 0; i < M; i++)
+		for (int j = 0; j < N; j++)
+			OutputImage[i][j] *= max_s;
+
+	if (dir == -1)
+	{
+		for (int i = M - 1; i >= M / 2; i--)
+		{
+			for (int j = N - 1; j >= 0; j--)
+			{
+				double temp = OutputImage[i][j];
+				OutputImage[i][j] = OutputImage[M - i][j];
+				OutputImage[M - i][j] = temp;
+			}
+		}
+		for (int i = M - 1; i >= 0; i--)
+		{
+			for (int j = N - 1; j >= N / 2; j--)
+			{
+				double temp = OutputImage[i][j];
+				OutputImage[i][j] = OutputImage[i][N - j];
+				OutputImage[i][N - j] = temp;
+			}
+		}
+
+	}
+
+	for (int i = 0; i < M; ++i)
+		free(out[i]);
+	free(out);
+}
+
+
 void FT::FFT(double * pFreqReal, double * pFreqImag, std::complex<double> * x, long int row, long int n, long int start)
 {
 	const double PI = 3.1415926;
@@ -471,7 +597,6 @@ void FT::FFT(double * pFreqReal, double * pFreqImag, std::complex<double> * x, l
 		}
 	}
 }
-
 
 
 void FT::LowpassFilter(double** Real, double** Img, double** filter)
