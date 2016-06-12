@@ -186,7 +186,7 @@ void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** F
 			xreal[indexb] = resultReal[indexb][indexa];
 			ximg[indexb] = resultImg[indexb][indexa];
 		}
-		FFT(FreqReal,FreqImag,InputImage,xreal,ximg,M,N,indexa,indexa);
+		FFT(resultReal,resultImg,InputImage,xreal,ximg,M,N,indexa,indexa);
 		for (int indexb = 0; indexb < M; indexb++) {
 			resultReal[indexb][indexa] = xreal[indexb];
 			resultImg[indexb][indexa] = ximg[indexb];
@@ -198,7 +198,7 @@ void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** F
 			xreal[indexb] = resultReal[indexa][indexb];
 			ximg[indexb] = resultImg[indexa][indexb];
 		}
-		FFT(FreqReal, FreqImag, InputImage, xreal, ximg, M, N, indexa, indexa);
+		FFT(resultReal, resultImg, InputImage, xreal, ximg, M, N, indexa, indexa);
 		for (int indexb = 0; indexb < M; indexb++) {
 			resultReal[indexa][indexb] = xreal[indexb];
 			resultImg[indexa][indexb] = ximg[indexb];
@@ -230,7 +230,6 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage,double 
 	int N = w;
 
 	int SIZE = M;
-
 	for (int indexa = 1, indexb = 0; indexa < SIZE; indexa++) {
 		for (int k = SIZE >> 1; !((indexb ^= k)&k); k >>= 1);
 
@@ -275,6 +274,9 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage,double 
 void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
 	std::cout << "hello,world" << std::endl;
+
+
+
 	int SIZE = h;
 	double ** resultReal;
 	double ** resultImag;
@@ -294,6 +296,8 @@ void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, doub
 			resultImag[indexa][indexb] = FreqImag[indexb][indexa];
 		}
 	}
+
+
 
 	for (int indexa = 0; indexa < SIZE; indexa++) {
 		for (int indexb = 0; indexb < SIZE; indexb++) {
@@ -320,18 +324,30 @@ void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, doub
 		}
 	}
 
+
+
 	double flag = -100;
 	for (int indexa = 0; indexa < SIZE; indexa++) {
 		for (int indexb = 0; indexb < SIZE; indexb++) {
 			OutputImage[indexa][indexb] = sqrt(resultReal[indexa][indexb] * resultReal[indexa][indexb] + resultImag[indexa][indexb] * resultImag[indexa][indexb]);
 			if (flag < OutputImage[indexa][indexb])	flag = OutputImage[indexa][indexb];
-			else flag = 0;
 		}
 	}
+	/*
+	for (int index = 0; index < w; index++) {
+		for (int indexa = 0; indexa < w; indexa++) {
+			std::cout << OutputImage[index][indexa]<<" ";
+		}
+		std::cout << std::endl;
+	}*/
+	std::cout << flag << std::endl;
 	flag /= 255;
 	flag = 1 / flag;
+
 	for (int indexa = 0; indexa < SIZE; indexa++) {
 		for (int indexb = 0; indexb < SIZE; indexb++) {
+			FreqImag[indexa][indexb] = resultImag[indexa][indexb];
+			FreqReal[indexa][indexb] = resultReal[indexa][indexb];
 			OutputImage[indexa][indexb] *= flag;
 		}
 	}
