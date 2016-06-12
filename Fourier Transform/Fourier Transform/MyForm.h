@@ -107,7 +107,7 @@ namespace FourierTransform {
 			this->tableLayoutPanel1->Controls->Add(this->flowLayoutPanel1, 0, 1);
 			this->tableLayoutPanel1->Dock = System::Windows::Forms::DockStyle::Fill;
 			this->tableLayoutPanel1->Location = System::Drawing::Point(0, 0);
-			this->tableLayoutPanel1->Margin = System::Windows::Forms::Padding(4, 4, 4, 4);
+			this->tableLayoutPanel1->Margin = System::Windows::Forms::Padding(4);
 			this->tableLayoutPanel1->Name = L"tableLayoutPanel1";
 			this->tableLayoutPanel1->RowCount = 2;
 			this->tableLayoutPanel1->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Percent, 5)));
@@ -178,6 +178,7 @@ namespace FourierTransform {
 			this->inverseFastFourierTransformToolStripMenuItem->Name = L"inverseFastFourierTransformToolStripMenuItem";
 			this->inverseFastFourierTransformToolStripMenuItem->Size = System::Drawing::Size(385, 30);
 			this->inverseFastFourierTransformToolStripMenuItem->Text = L"Inverse Fast Fourier Transform";
+			this->inverseFastFourierTransformToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::inverseFastFourierTransformToolStripMenuItem_Click);
 			// 
 			// lowpassFilterToolStripMenuItem
 			// 
@@ -217,7 +218,7 @@ namespace FourierTransform {
 			this->flowLayoutPanel1->Font = (gcnew System::Drawing::Font(L"新細明體", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(136)));
 			this->flowLayoutPanel1->Location = System::Drawing::Point(4, 58);
-			this->flowLayoutPanel1->Margin = System::Windows::Forms::Padding(4, 4, 4, 4);
+			this->flowLayoutPanel1->Margin = System::Windows::Forms::Padding(4);
 			this->flowLayoutPanel1->Name = L"flowLayoutPanel1";
 			this->flowLayoutPanel1->Size = System::Drawing::Size(1503, 1032);
 			this->flowLayoutPanel1->TabIndex = 1;
@@ -253,7 +254,7 @@ namespace FourierTransform {
 			// 
 			this->pictureBox_SourceImage->BackColor = System::Drawing::SystemColors::InactiveCaption;
 			this->pictureBox_SourceImage->Location = System::Drawing::Point(4, 27);
-			this->pictureBox_SourceImage->Margin = System::Windows::Forms::Padding(4, 4, 4, 4);
+			this->pictureBox_SourceImage->Margin = System::Windows::Forms::Padding(4);
 			this->pictureBox_SourceImage->Name = L"pictureBox_SourceImage";
 			this->pictureBox_SourceImage->Size = System::Drawing::Size(726, 1014);
 			this->pictureBox_SourceImage->TabIndex = 2;
@@ -263,7 +264,7 @@ namespace FourierTransform {
 			// 
 			this->pictureBox_OutputImage->BackColor = System::Drawing::SystemColors::InactiveCaption;
 			this->pictureBox_OutputImage->Location = System::Drawing::Point(738, 27);
-			this->pictureBox_OutputImage->Margin = System::Windows::Forms::Padding(4, 4, 4, 4);
+			this->pictureBox_OutputImage->Margin = System::Windows::Forms::Padding(4);
 			this->pictureBox_OutputImage->Name = L"pictureBox_OutputImage";
 			this->pictureBox_OutputImage->Size = System::Drawing::Size(750, 1004);
 			this->pictureBox_OutputImage->TabIndex = 3;
@@ -281,7 +282,7 @@ namespace FourierTransform {
 			this->ClientSize = System::Drawing::Size(1512, 1095);
 			this->Controls->Add(this->tableLayoutPanel1);
 			this->MainMenuStrip = this->menuStrip1;
-			this->Margin = System::Windows::Forms::Padding(4, 4, 4, 4);
+			this->Margin = System::Windows::Forms::Padding(4);
 			this->Name = L"MyForm";
 			this->Text = L"FourierTransform";
 			this->tableLayoutPanel1->ResumeLayout(false);
@@ -460,6 +461,43 @@ private: System::Void fastFourierTransformToolStripMenuItem_Click(System::Object
 		}
 	}
 	pictureBox_OutputImage->Image = FFTImage;
+}
+private: System::Void inverseFastFourierTransformToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+	int w = dataManager->GetImageWidth();
+	int h = dataManager->GetImageHeight();
+
+	// 利用傅立葉之平移性，平移頻率
+	for (int i = 0; i < h; i++)
+	{
+		for (int j = 0; j < w; j++)
+		{
+			int valuePixeli = dataManager->GetInputImage()[i][j];
+			valuePixeli = valuePixeli * pow((float)-1, (float)(i + j));
+			dataManager->SetPixel(j, i, valuePixeli);
+		}
+	}
+
+	//將算出頻率資訊傳入輸出影像
+	fourierTransformMethod->InverseFastFourierTransform(dataManager->GetInputImage(), dataManager->GetOutputImage(), dataManager->GetFreqReal(), dataManager->GetFreqImag(), h, w);
+	Bitmap^ DFTImage = gcnew Bitmap(w, h);
+	for (int i = 0; i <h; i++)
+	{
+		for (int j = 0; j <w; j++)
+		{
+			int valuePixeli = dataManager->GetOutputImage()[i][j];
+			if (valuePixeli > 255)
+			{
+				valuePixeli = 255;
+			}
+			else if (valuePixeli < 0)
+			{
+				valuePixeli = 0;
+			}
+			DFTImage->SetPixel(j, i, Color::FromArgb(valuePixeli, valuePixeli, valuePixeli));
+		}
+	}
+	pictureBox_OutputImage->Image = DFTImage;
+
 }
 };
 }
