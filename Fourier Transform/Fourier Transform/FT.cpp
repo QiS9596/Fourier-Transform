@@ -275,10 +275,6 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage,double 
 
 void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
-	std::cout << "hello,world" << std::endl;
-
-
-
 	int SIZE = h;
 	double ** resultReal;
 	double ** resultImag;
@@ -423,206 +419,36 @@ void FT::InverseFFT(double ** InverseReal, double ** InverseImag, double ** pFre
 }
 
 
-//team 11's code
-void swap(std::complex<double> *a, std::complex<double> *b)
+
+
+
+
+void FT::LowpassFilter(int **InputImage, int ** OutputImage, double** Real, double** Imag, int h, int w)
 {
-	std::complex<double> temp = *a;
-	*a = *b;
-	*b = temp;
-}
-
-
-void FT::FastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w, int dir)
-{
-	int M = h;
-	int N = w;
-	printf("M = %d,N = %d\n", M, N);
-
-	std::complex<double>** out = new std::complex<double>*[M];
-	for (int newcnt = 0; newcnt<M; newcnt++)
-	{
-		out[newcnt] = new std::complex<double>[N]; // 傅立葉頻率陣列
-	}
-	for (int i = 0; i < M; i++)
-	{
-		for (int j = 0; j < N; j++)
-		{
-			double a = FreqReal[j][i], b = FreqImag[j][i];
-			if (dir == 1)
-			{
-				a = InputImage[j][i];
-				b = 0;
-			}
-			std::complex<double> temp(a, b);
-			out[i][j] = temp;
-
-		}
-	}
-	if (dir == 1)
-		for (int j = 0; j <N; ++j)
-		{
-			std::complex<double> *input = new std::complex<double>[M];
-			for (int i = 0; i < M; ++i)
-				input[i] = out[i][j];
-			FFT(FreqReal[0], FreqImag[0], input, M, M, dir);
-			for (int i = 0; i < M; ++i)
-				out[i][j] = input[i];
-			free(input);
-		}
-	for (int i = 0; i < M; ++i)
-	{
-		std::complex<double> *input = new std::complex<double>[N];
-		for (int j = 0; j < N; ++j)
-		{
-			if (dir == 1)
-				input[j] = out[i][j];
-			else
-			{
-				std::complex<double> temp(out[i][j].real()*N, out[i][j].imag()*N);
-				input[j] = temp;
-			}
-		}
-		FFT(FreqReal[0], FreqImag[0], input, N, N, dir);
-		for (int j = 0; j < N; ++j)
-			out[i][j] = input[j];
-		free(input);
-	}
-	if (dir == -1)
-		for (int j = 0; j <N; ++j)
-		{
-			std::complex<double> *input = new std::complex<double>[M];
-			for (int i = 0; i < M; ++i)
-			{
-				std::complex<double> temp(out[i][j].real()*N, out[i][j].imag()*N);
-				input[i] = temp;
-			}
-			FFT(FreqReal[0], FreqImag[0], input, M, M, dir);
-			for (int i = 0; i < M; ++i)
-				out[i][j] = input[i];
-			free(input);
-		}
-	double max_s = -100;
-	for (int i = 0; i < M; i++)
-		for (int j = 0; j < N; j++)
-		{
-			FreqImag[i][j] = out[i][j].imag();
-			FreqReal[i][j] = out[i][j].real();
-			if (dir == 1)
-				OutputImage[i][j] = sqrt(pow(out[i][j].real(), 2.0) + pow(out[i][j].imag(), 2.0)) * 255;
-			else
-			{
-				OutputImage[i][j] = sqrt(pow(out[i][j].real(), 2.0) + pow(out[i][j].imag(), 2.0));
-			}
-			max_s < OutputImage[i][j] ? max_s = OutputImage[i][j] : 0;
-		}
-
-	dir == -1 ? max_s /= 255 : max_s = 1.0f;
-	max_s = 1.0f / max_s;
-	for (int i = 0; i < M; i++)
-		for (int j = 0; j < N; j++)
-			OutputImage[i][j] *= max_s;
-
-	if (dir == -1)
-	{
-		for (int i = M - 1; i >= M / 2; i--)
-		{
-			for (int j = N - 1; j >= 0; j--)
-			{
-				double temp = OutputImage[i][j];
-				OutputImage[i][j] = OutputImage[M - i][j];
-				OutputImage[M - i][j] = temp;
-			}
-		}
-		for (int i = M - 1; i >= 0; i--)
-		{
-			for (int j = N - 1; j >= N / 2; j--)
-			{
-				double temp = OutputImage[i][j];
-				OutputImage[i][j] = OutputImage[i][N - j];
-				OutputImage[i][N - j] = temp;
-			}
-		}
-
-	}
-
-	for (int i = 0; i < M; ++i)
-		free(out[i]);
-	free(out);
-}
-
-
-void FT::FFT(double * pFreqReal, double * pFreqImag, std::complex<double> * x, long int row, long int n, long int start)
-{
-	const double PI = 3.1415926;
-	int N = row;
-	for (int i = 1, j = 0; i < N; ++i)
-	{
-		for (int k = N >> 1; !((j ^= k)&k); k >>= 1);
-		if (i > j) swap(&x[i], &x[j]);
-	}
-
-	/* dynamic programming */
-	for (int k = 2; k <= N; k <<= 1)
-	{
-		double omega = -2.0 * PI / (1.0*k);
-		//利用Eular's equation計算傅立葉之實虛數部分
-		//InverseReal[x][y] += (pFreqReal[v][u] * c - pFreqImag[v][u] * s);
-		//InverseImag[x][y] += (pFreqReal[v][u] * s + pFreqImag[v][u] * c);
-
-		std::complex<double> dtheta(cos(omega), sin(omega));
-		// 每k個做一次FFT
-		for (int j = 0; j < N; j += k)
-		{
-			// 前k/2個與後k/2的三角函數值恰好對稱，
-			// 因此兩兩對稱的一起做。
-			std::complex<double> theta(1, 0);
-			for (int i = j; i < j + k / 2; i++)
-			{
-				std::complex<double> a = x[i];
-				std::complex<double> b = x[i + k / 2] * theta;
-				x[i] = a + b;
-				x[i + k / 2] = a - b;
-				theta *= dtheta;
-			}
-		}
-	}
-	for (int i = 0; i < N; ++i)
-	{
-		if (start == 1)
-		{
-			//x[i] = std::conj(x[i]);
-			x[i] /= N;
-		}
-	}
-}
-
-
-void FT::LowpassFilter(int **InputImage, int ** OutputImage, double** Real, double** Img, int h, int w)
-{
-	FastFourierTransform(InputImage, OutputImage, Real, Img, h, w);
+	FastFourierTransform(InputImage, OutputImage, Real, Imag, h, w);
 
 	for (int indexa = 0; indexa < h; indexa++) {
 		for (int indexb = 0; indexb < w; indexb++) {
 			if ((double)indexa*(double)indexa + (double)indexb*(double)indexb > DISTANCE_FLAG) {
 				Real[indexa][indexb] = 0;
-				Img[indexa][indexb] = 0;
+				Imag[indexa][indexb] = 0;
 			}
 		}
 	}
 
-	InverseFastFourierTransform(InputImage, OutputImage, Real, Img, h, w);
+	InverseFastFourierTransform(InputImage, OutputImage, Real, Imag, h, w);
 }
 
-void FT::HighpassFilter(int **InputImage, int ** OutputImage, double** Real, double** Img, int h, int w)
+void FT::HighpassFilter(int **InputImage, int ** OutputImage, double** Real, double** Imag, int h, int w)
 {
-	FastFourierTransform(InputImage, OutputImage, Real, Img, h, w);
+	FastFourierTransform(InputImage, OutputImage, Real, Imag, h, w);
 	for (int indexa = 0; indexa < h; indexa++) {
 		for (int indexb = 0; indexb < w; indexb++) {
 			if ((double)indexa*(double)indexa + (double)indexb*(double)indexb < DISTANCE_FLAG) {
 				Real[indexa][indexb] = 0;
-				Img[indexa][indexb] = 0;
+				Imag[indexa][indexb] = 0;
 			}
 		}
 	}
-	InverseFastFourierTransform(InputImage, OutputImage, Real, Img, h, w);
+	InverseFastFourierTransform(InputImage, OutputImage, Real, Imag, h, w);
 }
