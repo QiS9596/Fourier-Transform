@@ -1,4 +1,6 @@
 #include "FT.h"
+const double DISTANCE_FLAG = 10000.0;
+
 
 FT::FT()
 {
@@ -595,10 +597,32 @@ void FT::FFT(double * pFreqReal, double * pFreqImag, std::complex<double> * x, l
 }
 
 
-void FT::LowpassFilter(double** Real, double** Img, double** filter)
+void FT::LowpassFilter(int **InputImage, int ** OutputImage, double** Real, double** Img, int h, int w)
 {
+	FastFourierTransform(InputImage, OutputImage, Real, Img, h, w);
+
+	for (int indexa = 0; indexa < h; indexa++) {
+		for (int indexb = 0; indexb < w; indexb++) {
+			if ((double)indexa*(double)indexa + (double)indexb*(double)indexb > DISTANCE_FLAG) {
+				Real[indexa][indexb] = 0;
+				Img[indexa][indexb] = 0;
+			}
+		}
+	}
+
+	InverseFastFourierTransform(InputImage, OutputImage, Real, Img, h, w);
 }
 
-void FT::HighpassFilter(double** Real, double** Img, double** filter)
+void FT::HighpassFilter(int **InputImage, int ** OutputImage, double** Real, double** Img, int h, int w)
 {
+	FastFourierTransform(InputImage, OutputImage, Real, Img, h, w);
+	for (int indexa = 0; indexa < h; indexa++) {
+		for (int indexb = 0; indexb < w; indexb++) {
+			if ((double)indexa*(double)indexa + (double)indexb*(double)indexb < DISTANCE_FLAG) {
+				Real[indexa][indexb] = 0;
+				Img[indexa][indexb] = 0;
+			}
+		}
+	}
+	InverseFastFourierTransform(InputImage, OutputImage, Real, Img, h, w);
 }

@@ -23,8 +23,8 @@ public:
 
 
 
-	void LowpassFilter(double** Real, double** Img, double** filter);
-	void HighpassFilter(double** Real, double** Img, double** filter);
+	void LowpassFilter(int **InputImage, int ** OutputImage, double** Real, double** Img, int h, int w);
+	void HighpassFilter(int **InputImage, int ** OutputImage, double** Real, double** Img, int h, int w);
 
 private:
 
