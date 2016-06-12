@@ -275,7 +275,6 @@ void FT::FFT(double ** pFreqReal, double ** pFreqImag, int ** InputImage,double 
 void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, double ** FreqReal, double ** FreqImag, int h, int w)
 {
 	std::cout << "hello,world" << std::endl;
-	std::complex<double>* x;
 	int SIZE = h;
 	double ** resultReal;
 	double ** resultImag;
@@ -297,47 +296,28 @@ void FT::InverseFastFourierTransform(int ** InputImage, int ** OutputImage, doub
 	}
 
 	for (int indexa = 0; indexa < SIZE; indexa++) {
-		x = new std::complex<double>[SIZE];
 		for (int indexb = 0; indexb < SIZE; indexb++) {
 			xreal[indexb] = resultReal[indexa][indexb] * SIZE;
 			ximag[indexb] = resultImag[indexa][indexb] * SIZE;
 		}
-		for (int index = 0; index < SIZE; index++) {
-			x[index] = std::complex<double>(xreal[index], ximag[index]);
-		}
-		FFT(FreqReal[0], FreqImag[0], x, SIZE, SIZE, -1);
-		for (int index = 0; index < SIZE; index++) {
-			xreal[index] = x[index].real();
-			ximag[index] = x[index].imag();
-		}
-		//InverseFFT(FreqReal,FreqImag,FreqReal,FreqImag,xreal,ximag,h,w,indexa,indexa);
+		InverseFFT(FreqReal,FreqImag,FreqReal,FreqImag,xreal,ximag,h,w,indexa,indexa);
 		for (int indexb = 0; indexb < SIZE; indexb++) {
 			resultReal[indexa][indexb] = xreal[indexb];
 			resultImag[indexa][indexb] = ximag[indexb];
 		}
-		free(x);
 	}
 
 	for (int indexa = 0; indexa < SIZE; indexa++) {
-		x = new std::complex<double>[SIZE];
 		for (int indexb = 0; indexb < SIZE; indexb++) {
 			xreal[indexb] = resultReal[indexb][indexa]*SIZE;
 			ximag[indexb] = resultImag[indexb][indexa]*SIZE;
 		}
-		for (int index = 0; index < SIZE; index++) {
-			x[index] = std::complex<double>(xreal[index], ximag[index]);
-		}
-		FFT(FreqReal[0], FreqImag[0], x, SIZE, SIZE, -1);
-		for (int index = 0; index < SIZE; index++) {
-			xreal[index] = x[index].real();
-			ximag[index] = x[index].imag();
-		}
-		//InverseFFT(FreqReal, FreqImag, FreqReal, FreqImag, xreal, ximag, h, w, indexa, indexa);
+
+		InverseFFT(FreqReal, FreqImag, FreqReal, FreqImag, xreal, ximag, h, w, indexa, indexa);
 		for (int indexb = 0; indexb < SIZE; indexb++) {
 			resultReal[indexb][indexa] = xreal[indexb];
 			resultImag[indexb][indexa] = ximag[indexb];
 		}
-		free(x);
 	}
 
 	double flag = -100;
